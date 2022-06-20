@@ -7,9 +7,7 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 import onnx_graphsurgeon as gs
 import onnx
-import ctypes
 import copy
-ctypes.cdll.LoadLibrary('./layernorm/LayerNorm.so')
 G_LOGGER = trt.Logger(trt.Logger.ERROR)
 class MyAlgorithmSelector(trt.IAlgorithmSelector):
 
@@ -21,12 +19,6 @@ class MyAlgorithmSelector(trt.IAlgorithmSelector):
         print(layerAlgorithmContext.name)
         print(len(layerAlgorithmList))
         result = list((range(len(layerAlgorithmList))))
-        #result = []
-        if layerAlgorithmContext.name == 'MatMul_115':
-            for index, algorithm  in enumerate(layerAlgorithmList):
-                print(algorithm.algorithm_variant.tactic)
-            result = [1]
-            #result = [ index for index,algorithm in enumerate(layerAlgorithmList) if algorithm.algorithm_variant.implementation == 0x1fc87d7eb370bb7a ]
         return result
 
     def report_algorithms(self, modelAlgorithmContext, modelAlgorithmList):
@@ -86,6 +78,9 @@ class Test(object):
         config.algorithm_selector = MyAlgorithmSelector(True)  # set algorithm_selector
         
         engineString = builder.build_serialized_network(network, config)
+        if engineString is None:
+            print('engine str is None \n')
+            return
         with open('./err.plan', 'wb') as f:
             f.write(engineString)
 
